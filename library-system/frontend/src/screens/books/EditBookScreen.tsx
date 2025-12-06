@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   ScrollView,
@@ -9,6 +9,7 @@ import {
   Text,
 } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
+import { useFocusEffect } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { BooksStackParamList, Book, Author } from '../../types';
 import { booksApi } from '../../api/books.api';
@@ -35,11 +36,7 @@ export const EditBookScreen: React.FC<Props> = ({ route, navigation }) => {
   const [loading, setLoading] = useState(true);
   const [saveLoading, setSaveLoading] = useState(false);
 
-  useEffect(() => {
-    loadData();
-  }, [id]);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       const [bookData, authorsData] = await Promise.all([
         booksApi.getById(id),
@@ -63,7 +60,15 @@ export const EditBookScreen: React.FC<Props> = ({ route, navigation }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id, navigation]);
+
+  // Refresh data whenever this screen is focused
+  useFocusEffect(
+    useCallback(() => {
+      setLoading(true);
+      loadData();
+    }, [loadData])
+  );
 
   const handleUpdate = async () => {
     if (!title || !isbn || !authorId) {
@@ -269,6 +274,10 @@ const styles = StyleSheet.create({
   textArea: {
     height: 100,
     textAlignVertical: 'top',
+     backgroundColor: '#FAF9FF',
+    borderRadius: 12,
+    borderColor: '#E2DBFF',
+    borderWidth: 1.6,
   },
 
   row: {

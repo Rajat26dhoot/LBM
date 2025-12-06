@@ -7,6 +7,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Text,
+  TouchableOpacity,
 } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -17,6 +18,7 @@ import { Input } from '../../components/Input';
 import { Button } from '../../components/Button';
 import { LoadingSpinner } from '../../components/LoadingSpinner';
 import { BookPlus, User as UserIcon } from 'lucide-react-native';
+import DateTimePicker from '@react-native-community/datetimepicker';
 
 type Props = NativeStackScreenProps<BooksStackParamList, 'CreateBook'>;
 
@@ -25,6 +27,7 @@ export const CreateBookScreen: React.FC<Props> = ({ navigation }) => {
   const [isbn, setIsbn] = useState('');
   const [description, setDescription] = useState('');
   const [publishedDate, setPublishedDate] = useState('');
+  const [showDatePicker, setShowDatePicker] = useState(false);
   const [totalCopies, setTotalCopies] = useState('1');
   const [availableCopies, setAvailableCopies] = useState('1');
   const [authorId, setAuthorId] = useState('');
@@ -131,12 +134,35 @@ export const CreateBookScreen: React.FC<Props> = ({ navigation }) => {
             style={styles.textArea}
           />
 
-          <Input
-            label="Published Date (YYYY-MM-DD)"
-            value={publishedDate}
-            onChangeText={setPublishedDate}
-            placeholder="1997-06-26"
-          />
+          {/* Date Picker for Published Date */}
+          {/* Touchable date input for Published Date */}
+          {/* Published Date Picker - Touchable */}
+          <View style={{ marginBottom: 12 }}>
+            <TouchableOpacity onPress={() => setShowDatePicker(true)} activeOpacity={0.7}>
+              <View pointerEvents="none">
+                <Input
+                  label="Published Date"
+                  value={publishedDate}
+                  placeholder="YYYY-MM-DD"
+                  editable={false}
+                />
+              </View>
+            </TouchableOpacity>
+            {showDatePicker && (
+              <DateTimePicker
+                value={publishedDate ? new Date(publishedDate) : new Date()}
+                mode="date"
+                display={Platform.OS === 'ios' ? 'spinner' : 'calendar'}
+                onChange={(event, date) => {
+                  setShowDatePicker(false);
+                  if (date) {
+                    const formatted = date.toISOString().slice(0, 10);
+                    setPublishedDate(formatted);
+                  }
+                }}
+              />
+            )}
+          </View>
 
           <View style={styles.row}>
             <View style={styles.rowItem}>
@@ -238,7 +264,6 @@ const styles = StyleSheet.create({
     color: '#7A7493',
     marginTop: 2,
   },
-
   card: {
     backgroundColor: '#FFFFFF',
     borderRadius: 22,
@@ -253,6 +278,10 @@ const styles = StyleSheet.create({
   textArea: {
     height: 100,
     textAlignVertical: 'top',
+    backgroundColor: '#FAF9FF',
+    borderRadius: 12,
+    borderColor: '#E2DBFF',
+    borderWidth: 1.6,
   },
 
   row: {

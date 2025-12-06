@@ -7,6 +7,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Text,
+  TouchableOpacity,
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { AuthorsStackParamList } from '../../types';
@@ -14,6 +15,7 @@ import { authorsApi } from '../../api/authors.api';
 import { Input } from '../../components/Input';
 import { Button } from '../../components/Button';
 import { UserPlus2 } from 'lucide-react-native';
+import DateTimePicker from '@react-native-community/datetimepicker';
 
 type Props = NativeStackScreenProps<AuthorsStackParamList, 'CreateAuthor'>;
 
@@ -21,6 +23,7 @@ export const CreateAuthorScreen: React.FC<Props> = ({ navigation }) => {
   const [name, setName] = useState('');
   const [bio, setBio] = useState('');
   const [birthDate, setBirthDate] = useState('');
+  const [showDatePicker, setShowDatePicker] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const handleCreate = async () => {
@@ -78,12 +81,33 @@ export const CreateAuthorScreen: React.FC<Props> = ({ navigation }) => {
             style={styles.textArea}
           />
 
-          <Input
-            label="Birth Date (YYYY-MM-DD)"
-            value={birthDate}
-            onChangeText={setBirthDate}
-            placeholder="1965-07-31"
-          />
+          {/* Birth Date - touch to open calendar */}
+          <View style={{ marginBottom: 12 }}>
+            <TouchableOpacity onPress={() => setShowDatePicker(true)} activeOpacity={0.7}>
+              <View pointerEvents="none">
+                <Input
+                  label="Birth Date"
+                  value={birthDate}
+                  placeholder="YYYY-MM-DD"
+                  editable={false}
+                />
+              </View>
+            </TouchableOpacity>
+            {showDatePicker && (
+              <DateTimePicker
+                value={birthDate ? new Date(birthDate) : new Date()}
+                mode="date"
+                display={Platform.OS === 'ios' ? 'spinner' : 'calendar'}
+                onChange={(event, date) => {
+                  setShowDatePicker(false);
+                  if (date) {
+                    const formatted = date.toISOString().slice(0, 10);
+                    setBirthDate(formatted);
+                  }
+                }}
+              />
+            )}
+          </View>
 
           <View style={styles.buttonWrapper}>
             <Button title="Create Author" onPress={handleCreate} loading={loading} />
@@ -140,6 +164,10 @@ const styles = StyleSheet.create({
   textArea: {
     minHeight: 100,
     textAlignVertical: 'top',
+    backgroundColor: '#FAF9FF',
+    borderRadius: 12,
+    borderColor: '#E2DBFF',
+    borderWidth: 1.6,
   },
 
   buttonWrapper: {

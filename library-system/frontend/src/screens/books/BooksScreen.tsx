@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -9,6 +9,7 @@ import {
   TextInput,
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { useFocusEffect } from '@react-navigation/native';
 import { BooksStackParamList, Book } from '../../types';
 import { booksApi } from '../../api/books.api';
 import { BookCard } from '../../components/BookCard';
@@ -23,11 +24,7 @@ export const BooksScreen: React.FC<Props> = ({ navigation }) => {
   const [search, setSearch] = useState('');
   const [availableFilter, setAvailableFilter] = useState<boolean | undefined>(undefined);
 
-  useEffect(() => {
-    loadBooks();
-  }, [search, availableFilter]);
-
-  const loadBooks = async () => {
+  const loadBooks = useCallback(async () => {
     try {
       const data = await booksApi.getAll({
         search: search || undefined,
@@ -39,7 +36,21 @@ export const BooksScreen: React.FC<Props> = ({ navigation }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [search, availableFilter]);
+
+  // Reload when search/filter change while on screen
+  useEffect(() => {
+    setLoading(true);
+    loadBooks();
+  }, [loadBooks]);
+
+  // Reload when screen gains focus
+  useFocusEffect(
+    useCallback(() => {
+      setLoading(true);
+      loadBooks();
+    }, [loadBooks])
+  );
 
   if (loading && books.length === 0) return <LoadingSpinner />;
 
@@ -181,7 +192,7 @@ const styles = StyleSheet.create({
   filterText: {
     fontSize: 14,
     fontWeight: '600',
-    color: 'white',
+    color: 'black',
   },
 
   list: {

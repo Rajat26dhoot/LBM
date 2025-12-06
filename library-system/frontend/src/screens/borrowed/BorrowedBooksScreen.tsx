@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
   Alert,
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { useFocusEffect } from '@react-navigation/native';
 import { BorrowedStackParamList, BorrowedBook } from '../../types';
 import { borrowedBooksApi } from '../../api/borrowedBooks.api';
 import { BorrowedBookCard } from '../../components/BorrowedBookCard';
@@ -22,13 +23,7 @@ export const BorrowedBooksScreen: React.FC<Props> = () => {
   const [loading, setLoading] = useState(true);
   const [returningId, setReturningId] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (user) {
-      loadBorrowedBooks();
-    }
-  }, [user]);
-
-  const loadBorrowedBooks = async () => {
+  const loadBorrowedBooks = useCallback(async () => {
     if (!user) return;
     try {
       const data = await borrowedBooksApi.getByUser(user.id);
@@ -38,7 +33,16 @@ export const BorrowedBooksScreen: React.FC<Props> = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
+
+  // Reload list whenever this screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      if (!user) return;
+      setLoading(true);
+      loadBorrowedBooks();
+    }, [user, loadBorrowedBooks])
+  );
 
   const handleReturn = async (id: string) => {
     setReturningId(id);

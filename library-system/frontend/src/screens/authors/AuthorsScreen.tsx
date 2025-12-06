@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,7 @@ import {
   Alert,
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { useFocusEffect } from '@react-navigation/native';
 import { AuthorsStackParamList, Author } from '../../types';
 import { authorsApi } from '../../api/authors.api';
 import { AuthorCard } from '../../components/AuthorCard';
@@ -20,11 +21,7 @@ export const AuthorsScreen: React.FC<Props> = ({ navigation }) => {
   const [authors, setAuthors] = useState<Author[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    loadAuthors();
-  }, []);
-
-  const loadAuthors = async () => {
+  const loadAuthors = useCallback(async () => {
     try {
       const data = await authorsApi.getAll();
       setAuthors(data);
@@ -33,7 +30,14 @@ export const AuthorsScreen: React.FC<Props> = ({ navigation }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      setLoading(true);
+      loadAuthors();
+    }, [loadAuthors])
+  );
 
   if (loading) return <LoadingSpinner />;
 
